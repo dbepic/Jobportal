@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Profile {
+  id        Int     @id @default(autoincrement())
+  bio       String?
+  skills    Json?
+  education Json?
+  resume    Json?
+  userId    Int     @unique(map: "ProfileTable_userId_key")
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiletable")
+}
+
+model User {
+  id                Int            @id @default(autoincrement())
+  username          String?
+  lname             String?
+  email             String         @unique(map: "UserTable_email_key")
+  phone             String?
+  password          String?
+  role              UserRole       @default(user)
+  status            UserStatus     @default(active)
+  isVerified        Boolean        @default(false)
+  refreshToken      String?        @map("refresh_token") @db.Text
+  googleId          String?        @unique(map: "UserTable_googleId_key")
+  avatar            String?
+  forgotpassword    String?
+  forgotpasswordExp DateTime?
+  lastLogin         DateTime?      @map("LastLogin")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  companymodel      companymodel[]
+  profile           Profile?
+
+  @@index([email], map: "UserTable_email_idx")
+  @@map("usertable")
+}
+
+model companymodel {
+  id          Int     @id @default(autoincrement())
+  companyNmae String?
+  logo        String?
+  description String?
+  location    Json?
+  userId      Int
+  usertable   User    @relation(fields: [userId], references: [id], map: "companyModel_userId_fkey")
+
+  @@index([userId], map: "companyModel_userId_fkey")
+}
+
+enum UserRole {
+  user
+  admin
+
+  @@map("usertable_role")
+}
+
+enum UserStatus {
+  active
+  inactive
+
+  @@map("usertable_status")
+}
