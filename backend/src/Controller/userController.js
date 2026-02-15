@@ -164,16 +164,34 @@ const UserController = {
                     success: false
                 })
             }
-            let resume = [];
-            if (req.files.resume) {
-                for (const file of req.files.resume) {
+
+
+            let newResumes = [];
+
+            if (req.files?.length > 0) {
+                const uploads = req.files.map(async (file) => {
                     const parser = getdatauri(file);
-                    const cloudResponse = await cloudnary.uploader.upload(parser.content, {
-                        folder: "resume-pic"
-                    })
-                    resume.push(cloudResponse.secure_url)
-                }
+                    const cloudResponse = await cloudnary.uploader.upload(
+                        parser.content,
+                        { folder: "resumes" }
+                    );
+                    return cloudResponse.secure_url;
+                });
+
+                newResumes = await Promise.all(uploads);
             }
+
+            // ---------------------------
+            // Merge old + new resumes
+            // ---------------------------
+            const existingResumes = user.profile?.resume || [];
+            const mergedResumes =
+                newResumes.length > 0
+                    ? [...existingResumes, ...newResumes]
+                    : existingResumes;
+
+
+
             const updateData = await prisma.user.update({
                 where: { id: userId }, data: {
                     username,
@@ -185,13 +203,13 @@ const UserController = {
                                 bio,
                                 skills: skills ? skills.split(",") : [],
                                 education: education ? education.split(",") : [],
-                                resume: resume
+                                resume: mergedResumes,
                             },
                             update: {
                                 bio,
                                 skills: skills ? skills.split(",") : [],
                                 education: education ? education.split(",") : [],
-                                resume: resume
+                                resume: mergedResumes,
                             }
                         }
                     }
@@ -236,6 +254,10 @@ const UserController = {
             }
 
             const otp = generateOtp();
+
+            // let saltrounds = bcrypt.genSalt(10)
+            // const hashOtp = bcrypt.hash(otp, saltrounds)
+
             const expire = new Date(Date.now() + 15 * 60 * 1000);
 
             await prisma.user.update({

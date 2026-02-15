@@ -32,7 +32,7 @@ const Refreshtoken = async (userId) => {
 
 const Authorization = async (req, res, next) => {
     try {
-        const token = req.cookies.accesstoken || req.headers?.authorization.split(",");
+        const token = req.cookies.accesstoken || req.headers?.authorization.split("")[1];
         if (!token) {
             logger.warn(`no token has been provided`);
             return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -61,9 +61,7 @@ const Authorization = async (req, res, next) => {
 
 const Adminverfication = async (req, res, next) => {
     try {
-        const users = await prisma.user.findUnique({ id: users.id })
-
-        if (!users || users.role !== "admin") {
+        if (req.user.role !== "admin") {
             return res.status(StatusCodes.FORBIDDEN).json({
                 message: "Admin access only",
                 success: false,

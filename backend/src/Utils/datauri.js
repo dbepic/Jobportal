@@ -7,7 +7,7 @@ const getdatauri = (file) => {
     }
 
     const parser = new DataURIParser();
-    const ext = path.extname(file.originalname).toString(); // ✅ fixed
+    const ext = path.extname(file.originalname).toLowerCase(); // ✅ fixed
 
     return parser.format(ext, file.buffer);
 };
